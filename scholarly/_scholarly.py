@@ -238,6 +238,11 @@ class _Scholarly:
             object = publication_parser.fill(object)
         return object
 
+    def get_all_versions(self, object: Publication)->list:
+        """Get all versions of a publication"""
+        publication_parser = PublicationParser(self.__nav)
+        return publication_parser.get_all_versions(object)
+
     def bibtex(self, object: Publication)->str:
         """Returns a bibtex entry for a publication that has either Scholar source
         or citation source

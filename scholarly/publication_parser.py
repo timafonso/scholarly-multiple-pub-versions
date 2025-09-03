@@ -13,6 +13,8 @@ _BIBCITE = '/scholar?hl=en&q=info:{0}:scholar.google.com/\
 &output=cite&scirp={1}&hl=en'
 _CITEDBYLINK = '/scholar?hl=en&cites={0}'
 _MANDATES_URL = '/citations?view_op=view_mandate&hl=en&citation_for_view={0}'
+ALL_VERSIONS_URL = '/scholar?cluster={0}'
+
 
 _BIB_MAPPING = {
     'ENTRYTYPE': 'pub_type',
@@ -261,6 +263,9 @@ class PublicationParser(object):
             if 'Related articles' in link.text:
                 publication['url_related_articles'] = link['href']
 
+            if 'versions' in link.text:
+                publication['url_all_versions'] = link['href']
+
         if __data.find('div', class_='gs_ggs gs_fl'):
             publication['eprint_url'] = __data.find(
                 'div', class_='gs_ggs gs_fl').a['href']
@@ -372,6 +377,40 @@ class PublicationParser(object):
             publication['bib'].update(parsed_bib)
             publication['filled'] = True
         return publication
+    
+
+    def get_all_versions(self, publication: Publication) -> list:
+        """Get all versions of a publication"""
+        print("Inside get_all_versions")
+        all_versions = []
+        all_versions_url = publication['url_all_versions']
+        print("all_versions_url: ", all_versions_url)
+        soup = self.nav._get_soup(all_versions_url)
+        print(soup)
+        article_divs = soup.find_all('div', class_='gs_r gs_or gs_scl')
+        for article_div in article_divs:
+            cid = article_div.get('data-cid')
+            pos = article_div.get('data-rp')
+            print("cid: ", cid)
+            print("pos: ", pos)
+            version_url = _BIBCITE.format(cid, pos)
+            bibtex_url = self._get_bibtex(version_url)
+            bibtex = self.nav._get_page(bibtex_url)
+            parser = bibtexparser.bparser.BibTexParser(common_strings=True)
+            parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
+            all_versions.append(parsed_bib)
+        print(all_versions)
+        return all_versions
+
+        # soup = self.nav._get_soup(all_versions_url)
+        # all_versions_links = soup.find_all('a', class_='gs_or_cit gs_or_btn gs_nph')
+        # for version in all_versions_links:
+        #     version_url = version['href']
+        #     version_soup = self.nav._get_soup(version_url)
+        #     version_bibtex = self._get_bibtex(version_url)
+        #     all_versions.append(version_bibtex)
+        # print(all_versions)
+        # return all_versions
 
 
     def citedby(self, publication: Publication) -> _SearchScholarIterator or list:
@@ -417,6 +456,8 @@ class PublicationParser(object):
             if link.string.lower() == "bibtex":
                 return link.get('href')
         return ''
+    
+
 
     def _fill_public_access_mandates(self, publication: Publication) -> None:
         """Fills the public access mandates"""
