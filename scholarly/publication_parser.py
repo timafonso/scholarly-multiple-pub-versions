@@ -381,36 +381,22 @@ class PublicationParser(object):
 
     def get_all_versions(self, publication: Publication) -> list:
         """Get all versions of a publication"""
-        print("Inside get_all_versions")
         all_versions = []
         all_versions_url = publication['url_all_versions']
-        print("all_versions_url: ", all_versions_url)
         soup = self.nav._get_soup(all_versions_url)
-        print(soup)
         article_divs = soup.find_all('div', class_='gs_r gs_or gs_scl')
         for article_div in article_divs:
             cid = article_div.get('data-cid')
             pos = article_div.get('data-rp')
-            print("cid: ", cid)
-            print("pos: ", pos)
             version_url = _BIBCITE.format(cid, pos)
             bibtex_url = self._get_bibtex(version_url)
             bibtex = self.nav._get_page(bibtex_url)
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
             parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
             all_versions.append(parsed_bib)
-        print(all_versions)
         return all_versions
 
-        # soup = self.nav._get_soup(all_versions_url)
-        # all_versions_links = soup.find_all('a', class_='gs_or_cit gs_or_btn gs_nph')
-        # for version in all_versions_links:
-        #     version_url = version['href']
-        #     version_soup = self.nav._get_soup(version_url)
-        #     version_bibtex = self._get_bibtex(version_url)
-        #     all_versions.append(version_bibtex)
-        # print(all_versions)
-        # return all_versions
+
 
 
     def citedby(self, publication: Publication) -> _SearchScholarIterator or list:
