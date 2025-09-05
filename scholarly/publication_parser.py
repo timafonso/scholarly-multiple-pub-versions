@@ -396,11 +396,10 @@ class PublicationParser(object):
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
             print(bibtexparser.loads(bibtex,parser))
             print(bibtexparser.loads(bibtex,parser).entries)
-            parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
-            all_versions.append(parsed_bib)
+            if len(bibtexparser.loads(bibtex,parser).entries) > 0:
+                parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
+                all_versions.append(parsed_bib)
         return all_versions
-
-
 
 
     def citedby(self, publication: Publication) -> _SearchScholarIterator or list:
