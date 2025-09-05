@@ -382,7 +382,9 @@ class PublicationParser(object):
     def get_all_versions(self, publication: Publication) -> list:
         """Get all versions of a publication"""
         all_versions = []
-        all_versions_url = publication['url_all_versions']
+        all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
+        if all_versions_url == "":
+            return all_versions
         soup = self.nav._get_soup(all_versions_url)
         article_divs = soup.find_all('div', class_='gs_r gs_or gs_scl')
         for article_div in article_divs:
@@ -392,6 +394,8 @@ class PublicationParser(object):
             bibtex_url = self._get_bibtex(version_url)
             bibtex = self.nav._get_page(bibtex_url)
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
+            print(bibtexparser.loads(bibtex,parser))
+            print(bibtexparser.loads(bibtex,parser).entries)
             parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
             all_versions.append(parsed_bib)
         return all_versions
