@@ -3,7 +3,7 @@ import bibtexparser
 import arrow
 from bibtexparser.bibdatabase import BibDatabase
 from .data_types import BibEntry, Mandate, Publication, PublicationSource
-
+from time import time
 
 _SCHOLARPUBRE = r'cites=([\d,]*)'
 _CITATIONPUB = '/citations?hl=en&view_op=view_citation&citation_for_view={0}'
@@ -385,22 +385,35 @@ class PublicationParser(object):
         all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
         if all_versions_url == "":
             return all_versions
+
         soup = self.nav._get_soup(all_versions_url)
         article_divs = soup.find_all('div', class_='gs_r gs_or gs_scl')
+
         for article_div in article_divs:
             cid = article_div.get('data-cid')
             pos = article_div.get('data-rp')
             version_url = _BIBCITE.format(cid, pos)
             bibtex_url = self._get_bibtex(version_url)
-            bibtex = self.nav._get_page(bibtex_url)
+            bibtex = None
+
+            for attempt in range(5):
+                try:
+                    bibtex = self.nav._get_page(bibtex_url)
+                    break
+                except Exception as e:
+                    wait = 5 * (2 ** attempt)
+                    print(f"Fetch failed for {bibtex_url}, retrying in {wait}s...")
+                    time.sleep(wait)
+            if not bibtex:
+                print(f"Skipping version {version_url} after repeated failures")
+                continue
+
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
-            print(bibtexparser.loads(bibtex,parser))
-            print(bibtexparser.loads(bibtex,parser).entries)
-            if len(bibtexparser.loads(bibtex,parser).entries) > 0:
-                parsed_bib = remap_bib(bibtexparser.loads(bibtex,parser).entries[-1], _BIB_MAPPING, _BIB_DATATYPES)
+            parsed = bibtexparser.loads(bibtex, parser).entries
+            if parsed:
+                parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
                 all_versions.append(parsed_bib)
         return all_versions
-
 
     def citedby(self, publication: Publication) -> _SearchScholarIterator or list:
         """Searches Google Scholar for other articles that cite this Publication and
