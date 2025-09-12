@@ -384,6 +384,8 @@ class PublicationParser(object):
         all_versions = []
         all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
         if all_versions_url == "":
+            print(f"No all versions url found")
+            print(f"Publication: {publication}")
             return all_versions
         
         if debug:
