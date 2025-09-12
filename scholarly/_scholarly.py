@@ -241,6 +241,8 @@ class _Scholarly:
     def get_all_versions(self, object: Publication, debug: bool = False)->list:
         """Get all versions of a publication"""
         publication_parser = PublicationParser(self.__nav)
+        print(f"Getting all versions for {object['bib']['title']}")
+        print(f"Debug: {debug}")
         return publication_parser.get_all_versions(object, debug)
 
     def bibtex(self, object: Publication)->str:
