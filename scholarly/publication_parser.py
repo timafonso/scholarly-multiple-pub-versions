@@ -387,7 +387,6 @@ class PublicationParser(object):
             return all_versions
         
         if debug:
-            print(f"Getting all versions for {publication['bib']['title']}")
             print(f"All versions url: {all_versions_url}")
 
         soup = self.nav._get_soup(all_versions_url)
@@ -431,9 +430,6 @@ class PublicationParser(object):
             else:
                 if debug:
                     print(f"No bibtex found for {version_url}")
-
-        if debug:
-            print(f"All versions: {all_versions}")
 
         return all_versions
 
