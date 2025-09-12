@@ -379,17 +379,27 @@ class PublicationParser(object):
         return publication
     
 
-    def get_all_versions(self, publication: Publication) -> list:
+    def get_all_versions(self, publication: Publication, debug: bool = False) -> list:
         """Get all versions of a publication"""
         all_versions = []
         all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
         if all_versions_url == "":
             return all_versions
+        
+        if debug:
+            print(f"Getting all versions for {publication['bib']['title']}")
+            print(f"All versions url: {all_versions_url}")
 
         soup = self.nav._get_soup(all_versions_url)
         article_divs = soup.find_all('div', class_='gs_r gs_or gs_scl')
 
+        if debug:
+            print(f"Found {len(article_divs)} article divs")
+
         for article_div in article_divs:
+            if debug:
+                print(f"Processing article div: {article_div}")
+
             cid = article_div.get('data-cid')
             pos = article_div.get('data-rp')
             version_url = _BIBCITE.format(cid, pos)
@@ -399,6 +409,9 @@ class PublicationParser(object):
             for attempt in range(5):
                 try:
                     bibtex = self.nav._get_page(bibtex_url)
+                    if debug:
+                        print(f"Fetched bibtex for {version_url}")
+                        print(f"Bibtex: {bibtex}")
                     break
                 except Exception as e:
                     wait = 5 * (2 ** attempt)
@@ -413,6 +426,15 @@ class PublicationParser(object):
             if parsed:
                 parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
                 all_versions.append(parsed_bib)
+                if debug:
+                    print(f"Added version {parsed_bib['title']} to all_versions")
+            else:
+                if debug:
+                    print(f"No bibtex found for {version_url}")
+
+        if debug:
+            print(f"All versions: {all_versions}")
+
         return all_versions
 
     def citedby(self, publication: Publication) -> _SearchScholarIterator or list:
