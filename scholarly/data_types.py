@@ -223,6 +223,7 @@ class Publication(TypedDict, total=False):
     filled: bool
     source: PublicationSource
     container_type: str
+    url_all_versions: str
 
 class Author(TypedDict, total=False):
     """
