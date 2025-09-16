@@ -384,8 +384,6 @@ class PublicationParser(object):
         all_versions = []
         all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
         if all_versions_url == "":
-            print(f"No all versions url found")
-            print(f"Publication: {publication}")
             return all_versions
         
         if debug:
@@ -407,7 +405,7 @@ class PublicationParser(object):
             bibtex_url = self._get_bibtex(version_url)
             bibtex = None
 
-            for attempt in range(5):
+            for attempt in range(3):
                 try:
                     bibtex = self.nav._get_page(bibtex_url)
                     if debug:
@@ -427,11 +425,6 @@ class PublicationParser(object):
             if parsed:
                 parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
                 all_versions.append(parsed_bib)
-                if debug:
-                    print(f"Added version {parsed_bib['title']} to all_versions")
-            else:
-                if debug:
-                    print(f"No bibtex found for {version_url}")
 
         return all_versions
 
