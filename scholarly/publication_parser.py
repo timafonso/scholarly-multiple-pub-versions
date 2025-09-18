@@ -379,8 +379,17 @@ class PublicationParser(object):
         return publication
     
 
-    def get_all_versions(self, publication: Publication, debug: bool = False) -> list:
-        """Get all versions of a publication"""
+    def get_all_versions_bibtexes(self, publication: Publication, debug: bool = False) -> list:
+        """Get all versions of a publication as bibtex strings
+        
+        :param publication: Scholar or Citation publication container object
+        :type publication: Publication
+        :param debug: Whether to print debug information
+        :type debug: bool
+        
+        :getter: Returns a list of bibtex strings for all versions
+        :type: list[str]
+        """
         all_versions = []
         all_versions_url = "" if "url_all_versions" not in publication else publication['url_all_versions']
         if all_versions_url == "":
@@ -421,10 +430,17 @@ class PublicationParser(object):
                 continue
 
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
-            parsed = bibtexparser.loads(bibtex, parser).entries
+            bibtex_obj = bibtexparser.loads(bibtex, parser)
+            parsed = bibtex_obj.entries
             if parsed:
                 parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
-                all_versions.append(parsed_bib)
+                # Convert to bibtex string format similar to bibtex() method
+                a = BibDatabase()
+                converted_dict = remap_bib(parsed_bib, _BIB_REVERSE_MAPPING)
+                str_dict = {key: str(value) for key, value in converted_dict.items()}
+                a.entries = [str_dict]
+                bibtex_string = bibtexparser.dumps(a)
+                all_versions.append(bibtex_string)
 
         return all_versions
 
