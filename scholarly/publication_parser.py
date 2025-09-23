@@ -405,9 +405,15 @@ class PublicationParser(object):
             print(f"Found {len(article_divs)} article divs")
 
         for article_div in article_divs:
-            if debug:
-                print(f"Processing article div: {article_div}")
+            # Get div with class "gs_a" and extract the text
+            author_div = article_div.find('div', class_='gs_a')
+            author_text = author_div.text.lower()
+            irrelevant_sources = ["arxiv", "corr", "scholar.archive", "researchgate", "citeseer", "utdallas"]
 
+            if any(source in author_text for source in irrelevant_sources):
+                print("Skipping version because it is from an irrelevant source")
+                continue
+        
             cid = article_div.get('data-cid')
             pos = article_div.get('data-rp')
             version_url = _BIBCITE.format(cid, pos)
@@ -432,15 +438,21 @@ class PublicationParser(object):
             parser = bibtexparser.bparser.BibTexParser(common_strings=True)
             bibtex_obj = bibtexparser.loads(bibtex, parser)
             parsed = bibtex_obj.entries
+            print(f"Parsed: {parsed}")
             if parsed:
-                parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
-                # Convert to bibtex string format similar to bibtex() method
-                a = BibDatabase()
-                converted_dict = remap_bib(parsed_bib, _BIB_REVERSE_MAPPING)
-                str_dict = {key: str(value) for key, value in converted_dict.items()}
-                a.entries = [str_dict]
-                bibtex_string = bibtexparser.dumps(a)
-                all_versions.append(bibtex_string)
+                booktitle = parsed[-1].get("booktitle", "")
+                journal = parsed[-1].get("journal", "")
+                venue = parsed[-1].get("venue", "")
+                final_venue = booktitle or journal or venue
+                if final_venue and "arxiv" not in final_venue.lower() and "corr" not in final_venue.lower():
+                    parsed_bib = remap_bib(parsed[-1], _BIB_MAPPING, _BIB_DATATYPES)
+                    a = BibDatabase()
+                    converted_dict = remap_bib(parsed_bib, _BIB_REVERSE_MAPPING)
+                    str_dict = {key: str(value) for key, value in converted_dict.items()}
+                    a.entries = [str_dict]
+                    bibtex_string = bibtexparser.dumps(a)
+                    all_versions.append(bibtex_string)
+                return all_versions
 
         return all_versions
 
